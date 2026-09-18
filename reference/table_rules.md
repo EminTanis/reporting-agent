@@ -151,6 +151,18 @@ package needed. Values in this reference are illustrative only; what
 matters is the style (all-`S` typing, math-symbol headers, grouped
 `\midrule`s), not these specific numbers.
 
+Note the `table-format` deviation: this reference uses bare `S` with no
+`table-format` on every column, not the `S[table-format=W.D]` the rule
+above requires. That is deliberate here, not an exception to copy by
+default: several of its columns mix signs and precisions row to row
+(`+8.872`, `-146.6`, `90`) that do not share one `W.D` shape, so a single
+`table-format` would misalign some rows. `siunitx` still aligns bare `S`
+columns on the decimal point without it, just less tightly than a tuned
+`table-format` would. **Default to specifying `table-format` per the
+rule above** for a normal, uniform-precision column (e.g. the
+mass/velocity/tension example earlier in this section); only drop it,
+as here, when a column's own values genuinely do not share one format.
+
 ## Wide tables (many columns, or long text cells)
 
 When a table needs to span the full text width to stay readable (many
