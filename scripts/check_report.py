@@ -261,9 +261,9 @@ def find_braced_caption(text: str) -> tuple[int, str] | None:
 
 
 def check_table_rules(docs: list[Doc]) -> list[Failure]:
-    """Table markup follows reference/table_rules.md: booktabs rules
-    only (never \\hline), full-textwidth tabular* (never plain tabular),
-    and a caption of at most 8 words -- all inside any
+    """Table markup follows reference/table_rules.md: mandatory captions,
+    booktabs rules only (never \\hline), full-textwidth tabular* (never plain
+    tabular), and captions of at most 8 words -- all inside any
     \\begin{table}...\\end{table} block."""
     failures: list[Failure] = []
     for doc in docs:
@@ -302,22 +302,32 @@ def check_table_rules(docs: list[Doc]) -> list[Failure]:
                 )
 
             caption = find_braced_caption(block)
-            if caption:
-                caption_offset, caption_text = caption
-                words = _word_count(caption_text)
-                if words > 8:
-                    line_no = (
-                        text[: m.end() + caption_offset].count("\n") + 1
+            if not caption:
+                line_no = text[: m.start()].count("\n") + 1
+                failures.append(
+                    Failure(
+                        "missing-table-caption",
+                        str(doc.path),
+                        f"line {line_no}: table has no parseable \\caption; "
+                        "every table requires a caption per "
+                        "reference/table_rules.md",
                     )
-                    failures.append(
-                        Failure(
-                            "table-caption-too-long",
-                            str(doc.path),
-                            f"line {line_no}: caption is {words} words, "
-                            "over the 8-word limit in "
-                            "reference/table_rules.md",
-                        )
+                )
+                continue
+
+            caption_offset, caption_text = caption
+            words = _word_count(caption_text)
+            if words > 8:
+                line_no = text[: m.end() + caption_offset].count("\n") + 1
+                failures.append(
+                    Failure(
+                        "table-caption-too-long",
+                        str(doc.path),
+                        f"line {line_no}: caption is {words} words, "
+                        "over the 8-word limit in "
+                        "reference/table_rules.md",
                     )
+                )
     return failures
 
 

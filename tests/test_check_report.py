@@ -35,6 +35,23 @@ Value \\
 
         self.assertEqual([failure.kind for failure in failures], ["table-caption-too-long"])
 
+    def test_table_without_caption_fails(self) -> None:
+        """A table cannot bypass the rule by omitting its caption."""
+        table = r"""\begin{table}
+\label{tab:sample}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}} l@{}}
+\toprule
+Value \\
+\bottomrule
+\end{tabular*}
+\end{table}
+"""
+        failures = report_check.check_table_rules(
+            [report_check.Doc(path=Path("sample.tex"), text=table)]
+        )
+
+        self.assertEqual([failure.kind for failure in failures], ["missing-table-caption"])
+
 
 if __name__ == "__main__":
     unittest.main()
