@@ -18,7 +18,7 @@ license: MIT
 # Reporting agent
 
 Turns "here are results" or "here is a process" into a complete, compilable,
-modular LaTeX report. Read the three reference files below before drafting
+modular LaTeX report. Read the four reference files below before drafting
 anything; they are binding, not optional background.
 
 1. [reference/style_guide.md](reference/style_guide.md) — voice, tense,
@@ -29,6 +29,10 @@ anything; they are binding, not optional background.
    submodule/subsubmodule file convention, naming, preamble, build command.
 3. [reference/workflow.md](reference/workflow.md) — the six-phase
    orchestration procedure below, spelled out with the exact subagent briefs.
+4. [reference/table_rules.md](reference/table_rules.md) — the one fixed
+   way to build every table: skeleton, booktabs-only rule (mechanically
+   enforced by the linter), and the two column patterns to choose
+   between by table shape.
 
 ## Where output goes
 

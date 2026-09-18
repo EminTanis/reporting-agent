@@ -35,6 +35,9 @@ LABEL_RE = re.compile(r"\\label\{([^}]+)\}")
 REF_RE = re.compile(r"\\[Cc]?ref\{([^}]+)\}")
 FLOAT_BEGIN_RE = re.compile(r"\\begin\{(figure|table)\}")
 FLOAT_END_RE = re.compile(r"\\end\{(figure|table)\}")
+TABLE_BEGIN_RE = re.compile(r"\\begin\{table\}")
+TABLE_END_RE = re.compile(r"\\end\{table\}")
+HLINE_RE = re.compile(r"\\hline\b")
 SECTIONING_RE = re.compile(
     r"\\(chapter|section|subsection|subsubsection|input)\b"
 )
@@ -199,6 +202,30 @@ def check_first_person(docs: list[Doc]) -> list[Failure]:
     return failures
 
 
+def check_table_rules(docs: list[Doc]) -> list[Failure]:
+    """Table markup follows reference/table_rules.md: booktabs rules
+    only, never \\hline, inside any \\begin{table}...\\end{table} block."""
+    failures: list[Failure] = []
+    for doc in docs:
+        text = doc.text
+        for m in TABLE_BEGIN_RE.finditer(text):
+            end_match = TABLE_END_RE.search(text, m.end())
+            block_end = end_match.start() if end_match else len(text)
+            block = text[m.end() : block_end]
+            for hm in HLINE_RE.finditer(block):
+                line_no = text[: m.end() + hm.start()].count("\n") + 1
+                failures.append(
+                    Failure(
+                        "raw-hline-in-table",
+                        str(doc.path),
+                        f"line {line_no}: found \\hline inside a table; "
+                        "use \\toprule/\\midrule/\\bottomrule (booktabs) "
+                        "per reference/table_rules.md",
+                    )
+                )
+    return failures
+
+
 def main(argv: list[str]) -> int:
     if len(argv) != 2:
         print(f"usage: {argv[0]} <report-dir>", file=sys.stderr)
@@ -217,6 +244,7 @@ def main(argv: list[str]) -> int:
     failures += check_forward_references(docs)
     failures += check_explanation_paragraphs(docs)
     failures += check_first_person(docs)
+    failures += check_table_rules(docs)
 
     if not failures:
         print("OK: no hard failures")

@@ -62,7 +62,11 @@ Next submodule: <one-line summary, or "none, this is the last">
 Follow .opencode/skills/reporting-agent/reference/style_guide.md exactly:
 passive voice, no first person, every figure/table referenced before it
 appears and followed by an explanation paragraph, acronyms spelled out on
-first use, bridging sentences to the stated neighbors.
+first use, bridging sentences to the stated neighbors. Any table in this
+submodule follows
+.opencode/skills/reporting-agent/reference/table_rules.md exactly: fixed
+skeleton, booktabs only (never \hline), and the correct one of the two
+column patterns for the table's actual shape.
 
 # Acceptance
 The file compiles as a standalone \input target, contains at least one
@@ -97,6 +101,11 @@ Read every submodule in \input order. Fix, in place:
   paragraph, or referenced only after it appears
 - any first-person pronoun or active-voice construction that should be
   passive per reference/style_guide.md
+- any table not following reference/table_rules.md exactly: wrong rule
+  style (must be booktabs, never \hline — the linter hard-fails this),
+  caption below instead of above the tabular, wrong column pattern for
+  the table's actual shape (heterogeneous-unit rows must use Pattern A,
+  homogeneous-unit columns must use Pattern B, never a hand-mixed spec)
 - any acronym used before its long form is given
 
 # Input
