@@ -38,7 +38,7 @@ FLOAT_END_RE = re.compile(r"\\end\{(figure|table)\}")
 TABLE_BEGIN_RE = re.compile(r"\\begin\{table\}")
 TABLE_END_RE = re.compile(r"\\end\{table\}")
 HLINE_RE = re.compile(r"\\hline\b")
-CAPTION_BEGIN_RE = re.compile(r"\\caption\{")
+CAPTION_COMMAND_RE = re.compile(r"\\caption\b")
 TABULAR_ENV_RE = re.compile(r"\\begin\{(tabular\*?)\}")
 LATEX_MARKUP_RE = re.compile(r"\\[a-zA-Z]+\*?|[{}$]")
 SECTIONING_RE = re.compile(
@@ -213,27 +213,51 @@ def _word_count(caption_text: str) -> int:
     return len(stripped.split())
 
 
-def find_braced_caption(text: str) -> tuple[int, str] | None:
-    """Return the first regular \\caption body, preserving nested groups."""
-    match = CAPTION_BEGIN_RE.search(text)
-    if not match:
+def _balanced_body(
+    text: str, start: int, opening: str, closing: str
+) -> tuple[int, str] | None:
+    """Return the closing offset and body of a balanced LaTeX argument."""
+    if start >= len(text) or text[start] != opening:
         return None
 
     depth = 1
-    body_start = match.end()
+    body_start = start + 1
     idx = body_start
     while idx < len(text):
         if text[idx] == "\\":
             idx += 2
             continue
-        if text[idx] == "{":
+        if text[idx] == opening:
             depth += 1
-        elif text[idx] == "}":
+        elif text[idx] == closing:
             depth -= 1
             if depth == 0:
-                return match.start(), text[body_start:idx]
+                return idx, text[body_start:idx]
         idx += 1
     return None
+
+
+def find_braced_caption(text: str) -> tuple[int, str] | None:
+    """Return a \\caption body after its optional short-caption argument."""
+    match = CAPTION_COMMAND_RE.search(text)
+    if not match:
+        return None
+
+    idx = match.end()
+    while idx < len(text) and text[idx].isspace():
+        idx += 1
+    if idx < len(text) and text[idx] == "[":
+        optional = _balanced_body(text, idx, "[", "]")
+        if not optional:
+            return None
+        idx = optional[0] + 1
+        while idx < len(text) and text[idx].isspace():
+            idx += 1
+
+    required = _balanced_body(text, idx, "{", "}")
+    if not required:
+        return None
+    return match.start(), required[1]
 
 
 def check_table_rules(docs: list[Doc]) -> list[Failure]:

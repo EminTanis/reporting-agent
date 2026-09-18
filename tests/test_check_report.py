@@ -17,10 +17,10 @@ SPEC.loader.exec_module(report_check)
 
 
 class CaptionParsingTest(unittest.TestCase):
-    def test_nested_macro_caption_counts_all_words(self) -> None:
-        """A nested unit macro cannot hide an overlong table caption."""
+    def test_optional_nested_caption_counts_all_words(self) -> None:
+        """A short-list argument cannot hide an overlong nested caption."""
         table = r"""\begin{table}
-\caption{Measured values in \si{\kilogram} across five calibrated bench test cases}
+\caption[Measured values]{Measured values in \si{\kilogram} across five calibrated bench test cases}
 \label{tab:sample}
 \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}} l@{}}
 \toprule
