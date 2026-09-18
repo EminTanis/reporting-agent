@@ -38,6 +38,9 @@ FLOAT_END_RE = re.compile(r"\\end\{(figure|table)\}")
 TABLE_BEGIN_RE = re.compile(r"\\begin\{table\}")
 TABLE_END_RE = re.compile(r"\\end\{table\}")
 HLINE_RE = re.compile(r"\\hline\b")
+CAPTION_RE = re.compile(r"\\caption\{([^}]*)\}")
+TABULAR_ENV_RE = re.compile(r"\\begin\{(tabular\*?)\}")
+LATEX_MARKUP_RE = re.compile(r"\\[a-zA-Z]+\*?|[{}$]")
 SECTIONING_RE = re.compile(
     r"\\(chapter|section|subsection|subsubsection|input)\b"
 )
@@ -202,9 +205,19 @@ def check_first_person(docs: list[Doc]) -> list[Failure]:
     return failures
 
 
+def _word_count(caption_text: str) -> int:
+    """Approximate word count of a caption, stripping LaTeX commands and
+    grouping/math delimiters so e.g. '\\si{\\kilogram}' or '$N$' count
+    their remaining plain-text tokens rather than the markup itself."""
+    stripped = LATEX_MARKUP_RE.sub(" ", caption_text)
+    return len(stripped.split())
+
+
 def check_table_rules(docs: list[Doc]) -> list[Failure]:
     """Table markup follows reference/table_rules.md: booktabs rules
-    only, never \\hline, inside any \\begin{table}...\\end{table} block."""
+    only (never \\hline), full-textwidth tabular* (never plain tabular),
+    and a caption of at most 8 words -- all inside any
+    \\begin{table}...\\end{table} block."""
     failures: list[Failure] = []
     for doc in docs:
         text = doc.text
@@ -212,6 +225,7 @@ def check_table_rules(docs: list[Doc]) -> list[Failure]:
             end_match = TABLE_END_RE.search(text, m.end())
             block_end = end_match.start() if end_match else len(text)
             block = text[m.end() : block_end]
+
             for hm in HLINE_RE.finditer(block):
                 line_no = text[: m.end() + hm.start()].count("\n") + 1
                 failures.append(
@@ -223,6 +237,40 @@ def check_table_rules(docs: list[Doc]) -> list[Failure]:
                         "per reference/table_rules.md",
                     )
                 )
+
+            tabular_match = TABULAR_ENV_RE.search(block)
+            if tabular_match and tabular_match.group(1) != "tabular*":
+                line_no = (
+                    text[: m.end() + tabular_match.start()].count("\n") + 1
+                )
+                failures.append(
+                    Failure(
+                        "plain-tabular-in-table",
+                        str(doc.path),
+                        f"line {line_no}: found \\begin{{tabular}} instead "
+                        "of \\begin{tabular*}{\\textwidth}; every table "
+                        "spans the full text width per "
+                        "reference/table_rules.md",
+                    )
+                )
+
+            caption_match = CAPTION_RE.search(block)
+            if caption_match:
+                words = _word_count(caption_match.group(1))
+                if words > 8:
+                    line_no = (
+                        text[: m.end() + caption_match.start()].count("\n")
+                        + 1
+                    )
+                    failures.append(
+                        Failure(
+                            "table-caption-too-long",
+                            str(doc.path),
+                            f"line {line_no}: caption is {words} words, "
+                            "over the 8-word limit in "
+                            "reference/table_rules.md",
+                        )
+                    )
     return failures
 
 

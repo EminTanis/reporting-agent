@@ -8,11 +8,9 @@ for every case reported in \cref{s_results}.
 
 \begin{table}[!htb]
 \centering
-\caption{Baseline configuration used for every case in the process
-described in this chapter. Values are placeholders and should be
-replaced with the actual configuration supplied by the caller.}
+\caption{Baseline configuration for each case}
 \label{tab:baseline_config}
-\begin{tabular}{@{}llc@{}}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}} l l c@{}}
 \toprule
 Parameter & Description & Value \\
 \midrule
@@ -20,7 +18,7 @@ $N$ & Number of cases evaluated & 4 \\
 $\Delta t$ & Sample interval & \SI{0.1}{\second} \\
 $T$ & Total run duration & \SI{60}{\second} \\
 \bottomrule
-\end{tabular}
+\end{tabular*}
 \end{table}
 
 \Cref{tab:baseline_config} shows that four cases were evaluated at a

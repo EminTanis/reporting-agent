@@ -4,32 +4,54 @@ One fixed way to build every table, so every table in a report looks and
 behaves the same regardless of which `reporting-writer` dispatch drafted
 it. This is stricter than `style_guide.md`'s general caption/explanation
 rule: this file fixes the actual LaTeX markup, not just the prose around
-it.
+it. Table captions follow a different, shorter rule than the general
+caption rule in `style_guide.md` (see below) — that difference is
+deliberate and scoped to tables only; figure captions still follow
+`style_guide.md`'s full-sentence rule unchanged.
 
 ## Fixed skeleton — always this shape
 
 ```latex
 \begin{table}[!htb]
 \centering
-\caption{<Full descriptive sentence stating what the table shows>.}
+\caption{<Short label, at most 8 words>}
 \label{tab:<snake_case_name>}
-\begin{tabular}{<column spec>}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}} <column spec>}
 \toprule
 <header row> \\
 \midrule
 <data rows> \\
 \bottomrule
-\end{tabular}
+\end{tabular*}
 \end{table}
 ```
 
 Non-negotiable parts of this skeleton:
 
 - `[!htb]` placement, always. `\centering`, always.
-- **The caption goes above the tabular**, before `\begin{tabular}`. This
-  is the opposite of a figure, where the caption goes below the content
-  — captions sit above tables and below figures by convention; do not
-  mix the two up.
+- **Every table spans the full text width.** Use `tabular*{\textwidth}`
+  with `@{\extracolsep{\fill}}` as the first column-spec token — never
+  plain `tabular`, and never a table left at its natural (narrower)
+  content width. `\extracolsep{\fill}` distributes the extra width
+  between columns; never manually widen a column with `p{Ncm}` guessing
+  instead. `scripts/check_report.py` hard-fails on a `\begin{tabular}`
+  found directly inside a `\begin{table}` block instead of
+  `\begin{tabular*}{\textwidth}` — this is enforced, not just requested.
+- **Caption is at most 8 words**, a short label rather than a sentence
+  (e.g. `Measured pendulum periods`, not `Measured pendulum period and
+  its square for the five pivot-to-bob-center lengths tested on the
+  bench apparatus`). This is shorter than `style_guide.md`'s general
+  "full descriptive sentence" caption rule, scoped to tables only.
+  `scripts/check_report.py` hard-fails on a table caption over 8 words.
+  Because the caption itself now carries very little, the mandatory
+  explanation paragraph after the table (`style_guide.md`) is doing more
+  of the descriptive work than it would after a long caption — do not
+  shorten that paragraph to compensate for the short caption; if
+  anything it needs to be more complete, since the caption no longer is.
+- **The caption goes above the tabular**, before
+  `\begin{tabular*}`. This is the opposite of a figure, where the
+  caption goes below the content — captions sit above tables and below
+  figures by convention; do not mix the two up.
 - `\label{tab:...}` immediately after the caption, snake_case, always
   prefixed `tab:`. Never `Tab.`, `TAB_`, camelCase, or spaces.
 - **Rules are `\toprule`/`\midrule`/`\bottomrule` from `booktabs`, never
@@ -47,7 +69,9 @@ Non-negotiable parts of this skeleton:
 ## Two fixed column patterns — pick by table shape, not by taste
 
 A table is one of exactly two shapes. Identify which one it is, then use
-that pattern's fixed column spec. Do not invent a third pattern.
+that pattern's fixed column spec. Do not invent a third pattern. Both
+patterns use the same `tabular*{\textwidth}{@{\extracolsep{\fill}} ...}`
+wrapper from the skeleton above; only the interior column spec differs.
 
 ### Pattern A — parameter/value list (heterogeneous units per row)
 
@@ -58,7 +82,7 @@ single column type cannot carry one unit for all of these rows, so
 format each value with `\SI{}{}` or `\num{}` in the cell itself.
 
 ```latex
-\begin{tabular}{@{}llc@{}}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}} l l c@{}}
 \toprule
 Parameter & Description & Value \\
 \midrule
@@ -66,7 +90,7 @@ $N$        & Number of cases evaluated & 4 \\
 $\Delta t$ & Sample interval           & \SI{0.1}{\second} \\
 $T$        & Total run duration        & \SI{60}{\second} \\
 \bottomrule
-\end{tabular}
+\end{tabular*}
 ```
 
 - Text columns: `l` (left-aligned). A short categorical/boolean column
@@ -87,7 +111,7 @@ the column header and let `siunitx`'s `S` column type decimal-align the
 numbers automatically.
 
 ```latex
-\begin{tabular}{@{}l S[table-format=2.1] S[table-format=3.1] S[table-format=1.2]@{}}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}} l S[table-format=2.1] S[table-format=3.1] S[table-format=1.2]@{}}
 \toprule
 {Case} & {Mass [\si{\kilogram}]} & {Velocity [\si{\meter\per\second}]} & {Tension [\si{\kilo\newton}]} \\
 \midrule
@@ -95,7 +119,7 @@ numbers automatically.
 2 & 15.8 & 24.1 & 1.31 \\
 3 & 18.2 & 21.9 & 1.58 \\
 \bottomrule
-\end{tabular}
+\end{tabular*}
 ```
 
 - First column (row labels/case numbers): `l` when it is a text label
@@ -117,6 +141,11 @@ numbers automatically.
 - Data cells under an `S` column are bare numbers — no `\SI{}{}`, no
   units, no text. `siunitx` does the alignment; putting a unit in the
   cell breaks it.
+- `S` columns inside `tabular*{\textwidth}{@{\extracolsep{\fill}} ...}`
+  are verified compiling clean, with no overfull/underfull-hbox
+  warnings: `\extracolsep{\fill}` stretches the inter-column gaps, and
+  each `S` column still sizes and decimal-aligns itself independently
+  from `table-format`, so the two mechanisms do not conflict.
 
 #### Default style reference
 
@@ -145,6 +174,15 @@ the header only:
 \end{tabular}
 ```
 
+Quoted here exactly as retrieved, for attribution — its own
+`\begin{tabular}{SSSSSSSS}` is not wrapped in `tabular*{\textwidth}`. In
+this project, wrap the same interior column spec and rows in the
+skeleton above instead of quoting it bare:
+
+```latex
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}} SSSSSSSS@{}}
+```
+
 Verified compiling against this project's actual `preamble.tex` as-is —
 `amssymb` (already loaded) pulls in `amsfonts` for `\mathfrak`, no extra
 package needed. Values in this reference are illustrative only; what
@@ -163,30 +201,11 @@ rule above** for a normal, uniform-precision column (e.g. the
 mass/velocity/tension example earlier in this section); only drop it,
 as here, when a column's own values genuinely do not share one format.
 
-## Wide tables (many columns, or long text cells)
-
-When a table needs to span the full text width to stay readable (many
-columns, or a description column with long text), replace `tabular` with
-`tabular*` and let `\extracolsep{\fill}` distribute the extra width —
-never manually widen individual columns with `p{Ncm}` guessing:
-
-```latex
-\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}} c l p{7cm}@{}}
-\toprule
-Symbol & Name & Description \\
-\midrule
-...
-\bottomrule
-\end{tabular*}
-```
-
-Apply the same Pattern A/B choice inside a wide table; `tabular*` only
-changes how the table fills the page width, not the column-type rule
-above.
-
 ## Checklist before calling a table done
 
-- [ ] Caption is a full sentence, placed above the tabular.
+- [ ] Caption is at most 8 words, placed above the tabular.
+- [ ] Table uses `tabular*{\textwidth}{@{\extracolsep{\fill}} ...}`, not
+      plain `tabular`.
 - [ ] Label is `tab:snake_case_name`.
 - [ ] Rules are `\toprule`/`\midrule`/`\bottomrule`; no `\hline` anywhere.
 - [ ] Shape identified as Pattern A or Pattern B; the matching column
@@ -196,5 +215,5 @@ above.
       units inside data cells.
 - [ ] The table is referenced in prose before it appears
       (`style_guide.md`), and followed by an explanation paragraph
-      (`style_guide.md`) — this file only fixes the markup, not those
-      two rules.
+      (`style_guide.md`) that carries the descriptive detail the short
+      caption no longer does.
