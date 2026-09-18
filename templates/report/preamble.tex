@@ -17,6 +17,14 @@
 \usepackage{csquotes}
 \usepackage{hyperref}
 \usepackage{cleveref}
+% Adds List of Figures / List of Tables to the table of contents.
+% notbib: tocbibind targets classic \bibliography/thebibliography and
+% does not hook into biblatex's \printbibliography at all (verified
+% empirically -- loading it without notbib added no bibliography TOC
+% entry). The bibliography's own TOC entry comes from biblatex's native
+% heading=bibintoc option, passed at the \printbibliography call in
+% main.tex, not from this package.
+\usepackage[notbib]{tocbibind}
 
 % Bibliography: only load if references.bib actually has entries to cite.
 % Delete the block below (and the \printbibliography call in main.tex) for
