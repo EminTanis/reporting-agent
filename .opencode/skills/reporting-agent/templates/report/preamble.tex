@@ -1,0 +1,31 @@
+\documentclass[11pt,a4paper]{scrreprt}
+
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{siunitx}
+\sisetup{per-mode=symbol, inter-unit-product=\ensuremath{{}\cdot{}}}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage{float}
+\usepackage{csquotes}
+\usepackage{hyperref}
+\usepackage{cleveref}
+
+% Bibliography: only load if references.bib actually has entries to cite.
+% Delete the block below (and the \printbibliography call in main.tex) for
+% a report with no external citations.
+\usepackage[backend=biber, style=ieee]{biblatex}
+\addbibresource{references.bib}
+\newif\ifreportHasBibliography
+\reportHasBibliographytrue
+
+\title{Report Title}
+\author{Author Name}
+\date{\today}

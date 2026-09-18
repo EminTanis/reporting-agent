@@ -1,0 +1,33 @@
+\section{First Stage}%
+\label{s_first_stage}
+
+The baseline configuration for the process is summarized in
+\cref{tab:baseline_config}. Each parameter was set once, before the
+second stage of \cref{s_second_stage} was executed, and was held fixed
+for every case reported in \cref{s_results}.
+
+\begin{table}[!htb]
+\centering
+\caption{Baseline configuration used for every case in the process
+described in this chapter. Values are placeholders and should be
+replaced with the actual configuration supplied by the caller.}
+\label{tab:baseline_config}
+\begin{tabular}{@{}llc@{}}
+\toprule
+Parameter & Description & Value \\
+\midrule
+$N$ & Number of cases evaluated & 4 \\
+$\Delta t$ & Sample interval & \SI{0.1}{\second} \\
+$T$ & Total run duration & \SI{60}{\second} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\Cref{tab:baseline_config} shows that four cases were evaluated at a
+sample interval of \SI{0.1}{\second} over a total run duration of
+\SI{60}{\second} each. This configuration was chosen as the baseline
+because it is representative of the typical operating range being
+reported on; any case-specific deviation from it is stated explicitly
+where it occurs in \cref{s_results}. With the baseline fixed, the second
+stage of the process could be executed under controlled, repeatable
+conditions.
