@@ -16,10 +16,9 @@ English.
   transitions so the result reads as one coherent report, not disjoint
   fragments.
 
-Full workflow and style rules live in
-[`.opencode/skills/reporting-agent/SKILL.md`](.opencode/skills/reporting-agent/SKILL.md)
-and its `reference/` directory — read those once installed; this README
-only covers getting it installed and invoked.
+Full workflow and style rules live in [`SKILL.md`](SKILL.md) and
+[`reference/`](reference/) — read those once installed; this README only
+covers getting it installed and invoked.
 
 ## Prerequisites
 
@@ -30,6 +29,33 @@ only covers getting it installed and invoked.
   `tikz`/`pgfplots`, `hyperref`+`cleveref`, `csquotes`, and
   `biblatex`+`biber` — all ship with a full MiKTeX/TeX Live install.
 - Python 3.9+ on `PATH` to run the linter.
+
+## Package layout
+
+Everything is visible at the repo root — nothing is hidden inside a
+dot-folder in this repository itself. `install.sh`/`install.ps1` are the
+only things that know opencode/omp require the skill and its subagents
+to end up under `.opencode/`/`.omp/` in the *target* project; that
+placement happens at install time, not in this source tree.
+
+```
+reporting-agent/
+  README.md, LICENSE, install.sh, install.ps1
+  SKILL.md                skill entry point (frontmatter: name, description)
+  reference/               style_guide.md, latex_structure.md, workflow.md
+  templates/report/        working example: main.tex, preamble.tex,
+                            sections/ (chapter + subsubmodule pattern, a
+                            captioned table, a captioned tikz figure),
+                            references.bib, .gitignore
+  scripts/check_report.py  the caption/reference/voice linter
+  agents/
+    opencode/reporting-writer.md, reporting-editor.md
+    omp/reporting-writer.md, reporting-editor.md
+```
+
+`agents/omp/*.md` and `agents/opencode/*.md` carry byte-identical prompt
+bodies; only the frontmatter differs, because omp and opencode use
+different (and mutually incompatible) subagent frontmatter contracts.
 
 ## Install
 
@@ -45,12 +71,29 @@ cd reporting-agent
 .\install.ps1 -Target C:\path\to\your\project
 ```
 
-This merge-copies `.opencode/` and `.omp/` into the target project root
-(defaults to the current directory if no target is given). It never
-deletes anything in the target; it only adds or overwrites the
-`reporting-agent` skill/agent files themselves.
+This places `SKILL.md` + `reference/` + `templates/` + `scripts/` at
+`<target>/.opencode/skills/reporting-agent/`, and the agent files at
+`<target>/.opencode/agents/` and `<target>/.omp/agents/`. It never
+deletes anything else already in the target; it only adds or overwrites
+the `reporting-agent` skill/agent files themselves.
 
-### Option B — git submodule (for a monorepo/vault that tracks its tools)
+### Option B — clone directly as the skill directory (opencode only)
+
+opencode discovers `.opencode/skills/<name>/SKILL.md` directly, and this
+repo's root already looks like a valid skill folder (`SKILL.md` +
+`reference/` + `templates/` + `scripts/` right there), so you can clone
+straight into place:
+
+```sh
+git clone https://github.com/EminTanis/reporting-agent.git .opencode/skills/reporting-agent
+```
+
+This skips the two subagents (`agents/opencode/*.md`,
+`agents/omp/*.md` stay inside the cloned folder unused) — fine if you
+only want the skill itself; run `install.sh`/`install.ps1` afterward if
+you also want the subagents wired in.
+
+### Option C — git submodule (for a monorepo/vault that tracks its tools)
 
 ```sh
 git submodule add https://github.com/EminTanis/reporting-agent.git tools/reporting-agent
@@ -61,17 +104,13 @@ This is exactly how the EminOS vault consumes its own copy: the
 submodule is the source of truth, and the installer populates the live
 `.opencode`/`.omp` directories at the vault root from it.
 
-### Option C — manual
+### Option D — manual
 
-Copy these three paths from a clone into your project root, as-is:
-
-```
-.opencode/skills/reporting-agent/
-.opencode/agents/reporting-writer.md
-.opencode/agents/reporting-editor.md
-.omp/agents/reporting-writer.md
-.omp/agents/reporting-editor.md
-```
+Copy `SKILL.md`, `reference/`, `templates/`, `scripts/` into
+`<your-project>/.opencode/skills/reporting-agent/`, and the four files
+under `agents/opencode/` and `agents/omp/` into
+`<your-project>/.opencode/agents/` and `<your-project>/.omp/agents/`
+respectively.
 
 ## Use it
 
@@ -84,32 +123,10 @@ Copy these three paths from a clone into your project root, as-is:
   resolves once installed.
 - Either way, hand it the actual results/data/figures/process material
   and let it run its six-phase workflow (documented in
+  `reference/workflow.md`, and inside the installed
   `.opencode/skills/reporting-agent/reference/workflow.md`): intake,
   scaffold, parallel writer dispatch per submodule, assemble, editor
   coherence pass, compile.
-
-## Package layout
-
-```
-reporting-agent/
-  README.md, LICENSE, install.sh, install.ps1
-  .opencode/
-    skills/reporting-agent/
-      SKILL.md
-      reference/            style_guide.md, latex_structure.md, workflow.md
-      templates/report/     working example: main.tex, preamble.tex,
-                             sections/ (chapter + subsubmodule pattern,
-                             a captioned table, a captioned tikz figure),
-                             references.bib, .gitignore
-      scripts/check_report.py
-    agents/reporting-writer.md, reporting-editor.md
-  .omp/
-    agents/reporting-writer.md, reporting-editor.md
-```
-
-`.omp/agents/*.md` and `.opencode/agents/*.md` carry byte-identical
-prompt bodies; only the frontmatter differs, because omp and opencode use
-different (and mutually incompatible) subagent frontmatter contracts.
 
 ## License
 
