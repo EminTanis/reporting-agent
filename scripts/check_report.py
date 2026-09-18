@@ -38,7 +38,7 @@ FLOAT_END_RE = re.compile(r"\\end\{(figure|table)\}")
 TABLE_BEGIN_RE = re.compile(r"\\begin\{table\}")
 TABLE_END_RE = re.compile(r"\\end\{table\}")
 HLINE_RE = re.compile(r"\\hline\b")
-CAPTION_RE = re.compile(r"\\caption\{([^}]*)\}")
+CAPTION_BEGIN_RE = re.compile(r"\\caption\{")
 TABULAR_ENV_RE = re.compile(r"\\begin\{(tabular\*?)\}")
 LATEX_MARKUP_RE = re.compile(r"\\[a-zA-Z]+\*?|[{}$]")
 SECTIONING_RE = re.compile(
@@ -213,6 +213,29 @@ def _word_count(caption_text: str) -> int:
     return len(stripped.split())
 
 
+def find_braced_caption(text: str) -> tuple[int, str] | None:
+    """Return the first regular \\caption body, preserving nested groups."""
+    match = CAPTION_BEGIN_RE.search(text)
+    if not match:
+        return None
+
+    depth = 1
+    body_start = match.end()
+    idx = body_start
+    while idx < len(text):
+        if text[idx] == "\\":
+            idx += 2
+            continue
+        if text[idx] == "{":
+            depth += 1
+        elif text[idx] == "}":
+            depth -= 1
+            if depth == 0:
+                return match.start(), text[body_start:idx]
+        idx += 1
+    return None
+
+
 def check_table_rules(docs: list[Doc]) -> list[Failure]:
     """Table markup follows reference/table_rules.md: booktabs rules
     only (never \\hline), full-textwidth tabular* (never plain tabular),
@@ -254,13 +277,13 @@ def check_table_rules(docs: list[Doc]) -> list[Failure]:
                     )
                 )
 
-            caption_match = CAPTION_RE.search(block)
-            if caption_match:
-                words = _word_count(caption_match.group(1))
+            caption = find_braced_caption(block)
+            if caption:
+                caption_offset, caption_text = caption
+                words = _word_count(caption_text)
                 if words > 8:
                     line_no = (
-                        text[: m.end() + caption_match.start()].count("\n")
-                        + 1
+                        text[: m.end() + caption_offset].count("\n") + 1
                     )
                     failures.append(
                         Failure(
